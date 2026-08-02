@@ -34,7 +34,8 @@ if (fs.existsSync(publicDir)) {
   app.get("/{*any}", (req, res, next) => {
     res.sendFile(path.join(publicDir, "index.html"), (err) => next(err));
   });
-  
+}
+
 app.listen(PORT, () => {
     connectDB();
     console.log("Server is up and running on PORT: ", PORT);
