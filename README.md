@@ -2,7 +2,7 @@
 
 A full-stack, real-time messaging platform inspired by iMessage. Built with Node.js, Express, MongoDB, Socket.IO, and React, this application features instant messaging, media sharing, live user presence, custom theme customization, and secure real-time message management.
 
-🚀 **Live Demo:** [https://essage-h94q.onrender.com](https://essage-h94q.onrender.com)  
+🚀 **Live Demo:** [https://imessage-h94q.onrender.com](https://imessage-h94q.onrender.com)  
 📂 **GitHub Repository:** [https://github.com/arpita-pa/imessage](https://github.com/arpita-pa/imessage)
 
 ---
