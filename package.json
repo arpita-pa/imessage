@@ -1,0 +1,5 @@
+{
+  "dependencies": {
+    "@react-aria/utils": "^3.34.1"
+  }
+}
