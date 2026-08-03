@@ -20,6 +20,10 @@ const messageSchema = new mongoose.Schema({
     video: {
         type: String,
     },
+    isSeen: {
+        type: Boolean,
+        default: false,
+    },
 }, {timestamps: true});
 
 const Message = mongoose.model("Message", messageSchema);

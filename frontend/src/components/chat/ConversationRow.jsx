@@ -17,8 +17,13 @@ export function ConversationRow({ user, selected, onSelect }) {
         </Avatar>
       </AvatarWithOnlineIndicator>
 
-      <div className="min-w-0 flex-1">
+      <div className="flex min-w-0 flex-1 items-center justify-between gap-2">
         <p className="truncate text-[15px] font-semibold">{user.name}</p>
+        {user.unreadCount > 0 && (
+          <span className="flex size-5 shrink-0 items-center justify-center rounded-full bg-red-500 text-[11px] font-bold text-white">
+            {user.unreadCount}
+          </span>
+        )}
       </div>
     </button>
   );

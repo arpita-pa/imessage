@@ -21,23 +21,16 @@ export async function getConversationsForSidebar(req, res) {
     const loggedInUserId = req.user._id;
 
     const conversations = await Message.aggregate([
-      // 1. Keep only the messages I sent or received.
       { $match: { $or: [{ senderId: loggedInUserId }, { receiverId: loggedInUserId }] } },
-      // 2. Collapse them into one row per chat partner, noting our latest message time.
       {
         $group: {
-          // The partner is the other person on the message (not me).
           _id: { $cond: [{ $eq: ["$senderId", loggedInUserId] }, "$receiverId", "$senderId"] },
           lastMessageAt: { $max: "$createdAt" },
         },
       },
-      // 3. Put the most recent conversation at the top.
       { $sort: { lastMessageAt: -1 } },
-      // 4. Look up each partner's user profile (comes back as an array).
       { $lookup: { from: "users", localField: "_id", foreignField: "_id", as: "user" } },
-      // 5. Pull that profile out of the array and make it the document.
       { $replaceRoot: { newRoot: { $first: "$user" } } },
-      // 6. Hide the private clerkId field from the result.
       { $project: { clerkId: 0 } },
     ]);
 
@@ -97,7 +90,6 @@ export async function sendMessage(req, res) {
     await newMessage.save();
 
     const receiverSocketId = getReceiverSocketId(receiverId);
-    // only send the message in realtime if user is online
     if (receiverSocketId) {
       io.to(receiverSocketId).emit("newMessage", newMessage);
     }
@@ -105,6 +97,51 @@ export async function sendMessage(req, res) {
     res.status(201).json(newMessage);
   } catch (error) {
     console.error("Error in sendMessage:", error.message);
+    res.status(500).json({ message: "Internal server error" });
+  }
+}
+
+export async function getUnreadCounts(req, res) {
+  try {
+    const userId = req.user._id;
+
+    const unreadCounts = await Message.aggregate([
+      { $match: { receiverId: userId, isSeen: false } },
+      { $group: { _id: "$senderId", count: { $sum: 1 } } },
+    ]);
+
+    const countsObj = {};
+    unreadCounts.forEach((item) => {
+      countsObj[item._id.toString()] = item.count;
+    });
+
+    res.status(200).json(countsObj);
+  } catch (error) {
+    console.error("Error in getUnreadCounts:", error.message);
+    res.status(500).json({ message: "Internal server error" });
+  }
+}
+
+export async function markMessagesAsRead(req, res) {
+  try {
+    const { id: senderId } = req.params;
+    const receiverId = req.user._id;
+
+    await Message.updateMany(
+      { senderId: senderId, receiverId: receiverId, isSeen: false },
+      { $set: { isSeen: true } }
+    );
+
+    const senderSocketId = getReceiverSocketId(senderId);
+    if (senderSocketId) {
+      io.to(senderSocketId).emit("messagesMarkedAsRead", {
+        readBy: receiverId,
+      });
+    }
+
+    res.status(200).json({ success: true, message: "Messages marked as read" });
+  } catch (error) {
+    console.error("Error in markMessagesAsRead:", error.message);
     res.status(500).json({ message: "Internal server error" });
   }
 }

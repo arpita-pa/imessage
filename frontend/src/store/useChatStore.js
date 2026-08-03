@@ -12,6 +12,7 @@ export const useChatStore = create(
       conversations: [],
       messages: [],
       selectedUser: null,
+      unreadCounts: {},
       isConversationsLoading: false,
       isUsersLoading: false,
       isMessagesLoading: false,
@@ -52,12 +53,37 @@ export const useChatStore = create(
         }
       },
 
+      getUnreadCounts: async () => {
+        try {
+          const res = await axiosInstance.get("/messages/unread");
+          set({ unreadCounts: res.data });
+        } catch (error) {
+          console.log("Error in getUnreadCounts", error.message);
+        }
+      },
+
+      markMessagesAsRead: async (userId) => {
+        if (!userId) return;
+        try {
+          await axiosInstance.put(`/messages/mark-read/${userId}`);
+          set((state) => ({
+            unreadCounts: {
+              ...state.unreadCounts,
+              [userId]: 0,
+            },
+          }));
+        } catch (error) {
+          console.log("Error marking messages as read", error.message);
+        }
+      },
+
       getMessages: async (userId) => {
         if (!userId) return;
         set({ isMessagesLoading: true });
         try {
           const res = await axiosInstance.get(`/messages/${userId}`);
           set({ messages: res.data });
+          get().markMessagesAsRead(userId);
         } catch (error) {
           toast.error(error.response?.data?.message || "Failed to load messages");
         } finally {
@@ -88,18 +114,42 @@ export const useChatStore = create(
 
         socket.off("newMessage");
         socket.on("newMessage", (newMessage) => {
-          // if im not the receiver don't do anything just return
-          if (String(newMessage.senderId) !== String(userId)) return;
+          const isFromActiveUser = String(newMessage.senderId) === String(get().activeConversationId);
 
-          set({ messages: [...get().messages, newMessage] });
+          if (isFromActiveUser) {
+            set({ messages: [...get().messages, newMessage] });
+            get().markMessagesAsRead(newMessage.senderId);
+          } else {
+            const currentCounts = get().unreadCounts || {};
+            const senderId = newMessage.senderId;
+            set({
+              unreadCounts: {
+                ...currentCounts,
+                [senderId]: (currentCounts[senderId] || 0) + 1,
+              },
+            });
+          }
 
           get().getConversations();
+        });
+
+        socket.off("messagesMarkedAsRead");
+        socket.on("messagesMarkedAsRead", ({ readBy }) => {
+          if (String(readBy) === String(get().activeConversationId)) {
+            set({
+              messages: get().messages.map((msg) => ({
+                ...msg,
+                isSeen: true,
+              })),
+            });
+          }
         });
       },
 
       unsubscribeFromMessages: () => {
         const socket = useAuthStore.getState().socket;
         socket?.off("newMessage");
+        socket?.off("messagesMarkedAsRead");
       },
 
       setSelectedUser: (selectedUser) => set({ selectedUser }),
@@ -113,6 +163,10 @@ export const useChatStore = create(
             null,
           messages: activeConversationId ? state.messages : [],
         }));
+
+        if (activeConversationId) {
+          get().markMessagesAsRead(activeConversationId);
+        }
       },
 
       setSearchQuery: (searchQuery) => set({ searchQuery }),

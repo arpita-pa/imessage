@@ -13,6 +13,7 @@ function ChatPage() {
   const getConversations = useChatStore((state) => state.getConversations);
   const getMessages = useChatStore((state) => state.getMessages);
   const getUsers = useChatStore((state) => state.getUsers);
+  const getUnreadCounts = useChatStore((state) => state.getUnreadCounts);
   const subscribeToMessages = useChatStore((state) => state.subscribeToMessages);
   const unsubscribeFromMessages = useChatStore((state) => state.unsubscribeFromMessages);
 
@@ -21,7 +22,8 @@ function ChatPage() {
   useEffect(() => {
     getUsers();
     getConversations();
-  }, [getConversations, getUsers]);
+    getUnreadCounts();
+  }, [getConversations, getUsers, getUnreadCounts]);
 
   useEffect(() => {
     if (!activeConversationId) return;
@@ -29,7 +31,6 @@ function ChatPage() {
     getMessages(activeConversationId);
     subscribeToMessages(activeConversationId);
 
-    // cleanup
     return () => unsubscribeFromMessages();
   }, [getMessages, activeConversationId, subscribeToMessages, unsubscribeFromMessages]);
 
