@@ -109,9 +109,13 @@ export const useChatStore = create(
       deleteMessage: async (messageId) => {
         try {
           await axiosInstance.delete(`/messages/${messageId}`);
+
           set((state) => ({
-            messages: state.messages.filter((msg) => msg._id !== messageId),
+            messages: state.messages.filter(
+              (msg) => String(msg._id || msg.id) !== String(messageId)
+            ),
           }));
+
           toast.success("Message deleted");
         } catch (error) {
           toast.error(error.response?.data?.message || "Failed to delete message");
@@ -160,7 +164,9 @@ export const useChatStore = create(
         socket.off("messageDeleted");
         socket.on("messageDeleted", ({ messageId }) => {
           set((state) => ({
-            messages: state.messages.filter((msg) => msg._id !== messageId),
+            messages: state.messages.filter(
+              (msg) => String(msg._id || msg.id) !== String(messageId)
+            ),
           }));
         });
       },
@@ -181,7 +187,7 @@ export const useChatStore = create(
             state.users.find((user) => user._id === activeConversationId) ||
             state.conversations.find((user) => user._id === activeConversationId) ||
             null,
-          messages: activeConversationId ? state.messages : [],
+          messages: [], // Resets messages so old chat history doesn't flash
         }));
 
         if (activeConversationId) {
