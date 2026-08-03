@@ -35,7 +35,7 @@ export const useChatStore = create(
                 : null,
           }));
         } catch (error) {
-          console.log("Error in get Users", error.message);
+          console.log("Error in getUsers", error.message);
         } finally {
           set({ isUsersLoading: false });
         }
@@ -118,15 +118,14 @@ export const useChatStore = create(
         }
       },
 
-      subscribeToMessages: (userId) => {
-        if (!userId) return;
-
+      subscribeToMessages: () => {
         const socket = useAuthStore.getState().socket;
         if (!socket) return;
 
         socket.off("newMessage");
         socket.on("newMessage", (newMessage) => {
-          const isFromActiveUser = String(newMessage.senderId) === String(get().activeConversationId);
+          const activeId = get().activeConversationId;
+          const isFromActiveUser = String(newMessage.senderId) === String(activeId);
 
           if (isFromActiveUser) {
             set({ messages: [...get().messages, newMessage] });
@@ -147,7 +146,8 @@ export const useChatStore = create(
 
         socket.off("messagesMarkedAsRead");
         socket.on("messagesMarkedAsRead", ({ readBy }) => {
-          if (String(readBy) === String(get().activeConversationId)) {
+          const activeId = get().activeConversationId;
+          if (String(readBy) === String(activeId)) {
             set({
               messages: get().messages.map((msg) => ({
                 ...msg,

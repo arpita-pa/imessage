@@ -19,20 +19,22 @@ function ChatPage() {
 
   const { activeConversation, activeConversationId, isLargeScreen } = useSelectedConversation();
 
+  // Load initial data and subscribe to global socket events immediately
   useEffect(() => {
     getUsers();
     getConversations();
     getUnreadCounts();
-  }, [getConversations, getUsers, getUnreadCounts]);
+    subscribeToMessages();
 
+    return () => unsubscribeFromMessages();
+  }, [getConversations, getUsers, getUnreadCounts, subscribeToMessages, unsubscribeFromMessages]);
+
+  // Fetch messages and mark as read when switching active conversation
   useEffect(() => {
     if (!activeConversationId) return;
 
     getMessages(activeConversationId);
-    subscribeToMessages(activeConversationId);
-
-    return () => unsubscribeFromMessages();
-  }, [getMessages, activeConversationId, subscribeToMessages, unsubscribeFromMessages]);
+  }, [getMessages, activeConversationId]);
 
   return (
     <div className="flex h-dvh flex-col overflow-hidden p-2 sm:p-3 md:p-8" style={frameStyle}>
