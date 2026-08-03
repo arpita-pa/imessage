@@ -23,17 +23,23 @@ A full-stack, real-time messaging platform inspired by iMessage. Built with Node
 ## 🛠️ Tech Stack
 
 ### **Frontend**
-- **Framework:** React.js (Vite)
-- **State Management:** Zustand (with local persistence)
+- **Framework:** React
 - **Styling:** Tailwind CSS, Hero UI
-- **Icons & Toast:** Lucide React, React Hot Toast
-- **Authentication:** Clerk
+- **State Management:** Zustand
+- **Real-Time Client:** Socket.io Client
 
 ### **Backend**
-- **Runtime:** Node.js & Express.js
-- **Database:** MongoDB & Mongoose ORM
-- **Real-Time Protocol:** Socket.IO
-- **Media Optimization:** ImageKit API
+- **Runtime:** Node.js
+- **Framework:** Express.js
+- **Database:** MongoDB
+- **Real-Time Engine:** Socket.io
+- **Authentication:** Clerk
+- **Media Optimization:** ImageKit
+
+### **Deployment**
+- **Frontend:** Render
+- **Backend:** Render
+- **Database:** MongoDB Atlas
 
 ---
 
