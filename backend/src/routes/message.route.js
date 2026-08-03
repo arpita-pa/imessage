@@ -1,5 +1,6 @@
 import express from "express";
 import {
+  deleteMessage,
   getConversationsForSidebar,
   getMessages,
   getUnreadCounts,
@@ -20,5 +21,6 @@ router.get("/unread", getUnreadCounts);
 router.get("/:id", getMessages);
 router.put("/mark-read/:id", markMessagesAsRead);
 router.post("/send/:id", upload.single("media"), sendMessage);
+router.delete("/:id", deleteMessage);
 
 export default router;
