@@ -3,11 +3,9 @@ import http from "http";
 import { Server } from "socket.io";
 
 const app = express();
-
 const server = http.createServer(app);
 
-const allowedOrigin =
-  process.env.FRONTEND_URL || "http://localhost:5173";
+const allowedOrigin = process.env.FRONTEND_URL || "http://localhost:5173";
 
 const io = new Server(server, {
   cors: {
@@ -15,7 +13,7 @@ const io = new Server(server, {
   },
 });
 
-// online users map = { userId: socketId }
+// userId -> socketId
 const userSocketMap = {};
 
 function getReceiverSocketId(userId) {
@@ -23,15 +21,29 @@ function getReceiverSocketId(userId) {
 }
 
 io.on("connection", (socket) => {
+  console.log("✅ Socket connected:", socket.id);
+
   const userId = socket.handshake.query.userId;
 
-  if (userId) userSocketMap[userId] = socket.id;
+  console.log("User ID:", userId);
 
+  if (userId && userId !== "undefined" && userId !== "null") {
+    userSocketMap[userId] = socket.id;
+  }
+
+  console.log("Online users:", Object.keys(userSocketMap));
+
+  // Send updated online users list
   io.emit("getOnlineUsers", Object.keys(userSocketMap));
 
   socket.on("disconnect", () => {
-    if (userId) delete userSocketMap[userId];
+    console.log("❌ Socket disconnected:", socket.id);
 
+    if (userId && userSocketMap[userId] === socket.id) {
+      delete userSocketMap[userId];
+    }
+
+    console.log("Online users:", Object.keys(userSocketMap));
     io.emit("getOnlineUsers", Object.keys(userSocketMap));
   });
 });

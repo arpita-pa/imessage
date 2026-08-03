@@ -21,21 +21,33 @@ export const useAuthStore = create((set, get) => ({
     } catch (error) {
       console.error("Error in checkAuth:", error);
       set({ authUser: null });
+      get().disconnectSocket();
     } finally {
       set({ isCheckingAuth: false });
     }
   },
 
   clearAuth: () => {
-    set({ authUser: null, isCheckingAuth: false, onlineUsers: [] });
     get().disconnectSocket();
+    set({ authUser: null, isCheckingAuth: false, onlineUsers: [] });
   },
 
   connectSocket: (user) => {
-    if (!user || get().socket?.connected) return;
+    const currentUser = user || get().authUser;
 
-    const socket = io(BASE_URL, { query: { userId: user._id } });
+    if (!currentUser || get().socket?.connected) return;
 
+    if (get().socket) {
+      get().socket.disconnect();
+    }
+
+    const socket = io(BASE_URL, {
+      query: { userId: currentUser._id },
+      transports: ["websocket"],
+      reconnection: true,
+    });
+
+    socket.connect();
     set({ socket });
 
     socket.on("getOnlineUsers", (userIds) => {
@@ -45,7 +57,9 @@ export const useAuthStore = create((set, get) => ({
 
   disconnectSocket: () => {
     const socket = get().socket;
-    if (socket?.connected) socket.disconnect();
-    set({ socket: null });
+    if (socket) {
+      socket.disconnect();
+      set({ socket: null });
+    }
   },
 }));
